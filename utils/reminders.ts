@@ -262,7 +262,6 @@ async function createReminder(
 				const month = dateObj.getMonth() + 1;
 				const day = dateObj.getDate();
 				
-				// If dueTime is provided separately, use it; otherwise use time from dueDate if present
 				let hour = dateObj.getHours();
 				let minute = dateObj.getMinutes();
 				
