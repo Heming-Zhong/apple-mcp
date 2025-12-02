@@ -245,6 +245,39 @@ async function createReminder(
 		const cleanListName = listName.replace(/\"/g, '\\"');
 		const cleanNotes = notes ? notes.replace(/\"/g, '\\"') : "";
 
+		// Build properties string for AppleScript
+		let propertiesStr = `name:"${cleanName}"`;
+		
+		if (cleanNotes) {
+			propertiesStr += `, body:"${cleanNotes}"`;
+		}
+
+		// Build due date AppleScript if provided
+		let dueDateScript = "";
+		if (dueDate) {
+			// Parse ISO date string (e.g., "2025-12-25" or "2025-12-25T14:30:00")
+			const dateObj = new Date(dueDate);
+			if (!isNaN(dateObj.getTime())) {
+				const year = dateObj.getFullYear();
+				const month = dateObj.getMonth() + 1;
+				const day = dateObj.getDate();
+				
+				// If dueTime is provided separately, use it; otherwise use time from dueDate if present
+				let hour = dateObj.getHours();
+				let minute = dateObj.getMinutes();
+				
+				dueDateScript = `
+				set dueDateTime to current date
+				set year of dueDateTime to ${year}
+				set month of dueDateTime to ${month}
+				set day of dueDateTime to ${day}
+				set hours of dueDateTime to ${hour}
+				set minutes of dueDateTime to ${minute}
+				set seconds of dueDateTime to 0
+				set due date of newReminder to dueDateTime`;
+			}
+		}
+
 		const script = `
 tell application "Reminders"
     try
@@ -255,7 +288,8 @@ tell application "Reminders"
             set listName to name of targetList
 
             -- Create a simple reminder with just name
-            set newReminder to make new reminder at targetList with properties {name:"${cleanName}"}
+            set newReminder to make new reminder at targetList with properties {${propertiesStr}}
+			${dueDateScript}
             return "SUCCESS:" & listName
         else
             return "ERROR:No lists available"
